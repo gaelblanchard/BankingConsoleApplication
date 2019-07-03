@@ -245,17 +245,23 @@ namespace BankingBusinessLayer //Business Layer Function Logic
             return canDeposit;
         }
         //Term Deposit
-        public bool TermDeposit(IAccount account, Principal principal)
+        public bool TermDeposit(User user,IAccount account, Principal principal)
         {
+            int DepIndex = user.Accounts.FindIndex(n => n.AccountId == account.AccountId);
             bool canDeposit = false;
             if (principal.AmountInvolved > 0)
             {
+                string actionString = $"User {user.UserId} made a term deposit of {principal.AmountInvolved} to Account {account.AccountId}";
+                account.Transactions.Add(actionString);
+                account.UnappliedPrincipal.Add(principal);
+                user.Accounts[DepIndex] = account;
                 canDeposit = true;
             }
             else
             {
                 canDeposit = false;
             }
+            //run unappliedprincipal check
             return canDeposit;
         }
         // Checks current standing of user
@@ -498,7 +504,7 @@ namespace BankingBusinessLayer //Business Layer Function Logic
                     case "D":
                         if (AtLeastOneAccount)
                         {
-                            Console.WriteLine("Select which account ID you want to withdraw from:");
+                            Console.WriteLine("Select which account ID you want to deposit to:");
 
                             string givenId = Console.ReadLine();
                             // Give check for parse operation
@@ -551,6 +557,7 @@ namespace BankingBusinessLayer //Business Layer Function Logic
                                         {
                                             AmountInvolved = convertedValue
                                         };
+                                        bool termdeposited = TermDeposit(user,user.Accounts[IdMatch], termDepositPrincipal);
                                         
                                         break;
                                     case "D":
@@ -569,6 +576,7 @@ namespace BankingBusinessLayer //Business Layer Function Logic
                                         if (deposited)
                                         {
                                             Console.WriteLine("Deposit completed");
+                                            // Run term deposit check
                                         }
                                         else
                                         {
