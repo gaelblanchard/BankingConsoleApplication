@@ -535,7 +535,23 @@ namespace BankingBusinessLayer //Business Layer Function Logic
                                         {
                                             AmountInvolved = convertedValue
                                         };
-                                        //Principal termDepositPrincipal = new Principal(DateDeposited,DateMaturity,365)
+                                        //Add checks
+                                        Console.WriteLine("Enter Month of Maturity");
+                                        string month = Console.ReadLine();
+                                        int convertedMonth = int.Parse(month);
+                                        Console.WriteLine("Enter Day of Maturity");
+                                        string day = Console.ReadLine();
+                                        int convertedDay = int.Parse(day);
+                                        Console.WriteLine("Enter Year of Maturity");
+                                        string year = Console.ReadLine();
+                                        int convertedYear = int.Parse(year);
+
+                                        DateTime dateMatriculation = new DateTime(convertedYear,convertedMonth,convertedDay);
+                                        Principal termDepositPrincipal = new Principal(DateTime.Now,dateMatriculation, 30)
+                                        {
+                                            AmountInvolved = convertedValue
+                                        };
+                                        
                                         break;
                                     case "D":
                                         Console.WriteLine("Make a Deposit");
@@ -550,6 +566,14 @@ namespace BankingBusinessLayer //Business Layer Function Logic
                                             AmountInvolved = convertedDepValue
                                         };
                                         bool deposited = Deposit(user,user.Accounts[IdMatch], depPrincipal);
+                                        if (deposited)
+                                        {
+                                            Console.WriteLine("Deposit completed");
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine("Deposit not completed");
+                                        }
                                         // If statements to run loan check and business check
                                         //Can not be negative
                                         // Then it should work
@@ -607,6 +631,98 @@ namespace BankingBusinessLayer //Business Layer Function Logic
                     case "Z":
                         if (AtLeastTwoAccounts)
                         {
+                            Console.WriteLine("Select which account ID you want to withdraw from:");
+
+                            string withdrawId = Console.ReadLine();
+                            // Give check for parse operation
+                            int convertedWithdrawId = int.Parse(withdrawId);
+                            // search for account by ID
+                            int WithdrawIdMatch = user.Accounts.FindIndex(n => n.AccountId == convertedWithdrawId);
+                            if(WithdrawIdMatch < 0)
+                            {
+                                Console.WriteLine("Account Does not exist. Therefore we can not complete this transfer.");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Enter Amount you want to withdraw:");
+                                string Value = Console.ReadLine();
+                                // Give check for parse operation
+                                double convertedValue = int.Parse(Value);
+                                // Check if negative run check
+                                Principal principal = new Principal
+                                {
+                                    AmountInvolved = convertedValue
+                                };
+                                bool withdrawResult = true;
+                                if (user.Accounts[WithdrawIdMatch] is CheckingAccount)
+                                {
+                                    bool result = Withdraw(user, (CheckingAccount)user.Accounts[WithdrawIdMatch], principal);
+                                    if (result)
+                                    {
+                                        Console.WriteLine("Withrawal completed.");
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Withdrawal invalid!");
+                                    }
+                                    withdrawResult = result;
+                                }
+                                else if (user.Accounts[WithdrawIdMatch] is BusinessAccount)
+                                {
+                                    bool result = Withdraw(user, (BusinessAccount)user.Accounts[WithdrawIdMatch], principal);
+                                    if (result)
+                                    {
+                                        Console.WriteLine("Withrawal completed.");
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Withdrawal invalid!");
+                                    }
+                                    withdrawResult = result;
+                                }
+                                else if (user.Accounts[WithdrawIdMatch] is LoanAccount)
+                                {
+                                    bool result = Withdraw(user, (LoanAccount)user.Accounts[WithdrawIdMatch], principal);
+                                    if (result)
+                                    {
+                                        Console.WriteLine("Withrawal completed.");
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Withdrawal invalid!");
+                                    }
+                                    withdrawResult = result;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Type not detected!!");
+                                    withdrawResult = false;
+                                }
+                                if (withdrawResult)
+                                {
+                                    Console.WriteLine("Enter Account Id you want to deposit to");
+                                    string depositId = Console.ReadLine();
+                                    // Give check for parse operation
+                                    int convertedDepositId = int.Parse(depositId);
+                                    // search for account by ID
+                                    int DepositIdMatch = user.Accounts.FindIndex(n => n.AccountId == convertedDepositId);
+                                    if (DepositIdMatch < 0) {
+                                        Console.WriteLine("Id is invalid. Depositing funds back into original account!");
+                                        bool deposited = Deposit(user, user.Accounts[WithdrawIdMatch], principal);
+
+                                    }
+                                    else
+                                    {
+                                        bool deposited = Deposit(user, user.Accounts[DepositIdMatch], principal);
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Withdraw Could not be completed! Transfer aborted!");
+                                }
+
+                            }
+
                             // Creates principal object
                             // if negative exits
                             // Get first account
