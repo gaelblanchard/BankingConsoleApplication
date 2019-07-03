@@ -70,6 +70,22 @@ namespace BankingBusinessLayer //Business Layer Function Logic
                     break;
                 default:
                     Console.WriteLine("Not a valid input");
+                    Console.WriteLine("Do you want to continue?");
+                    Console.WriteLine("Y = yes, N = no");
+                    string sure_input = Console.ReadLine();
+                    switch (sure_input)
+                    {
+                        case "Y":
+                            Console.WriteLine("Goodbye.");
+                            break;
+                        case "N":
+                            RegisterMenu();
+                            break;
+                        default:
+                            Console.WriteLine("You will now exit the program");
+                            break;
+                    }
+                    //RegisterMenu();
                     break;
             }
 
@@ -79,26 +95,54 @@ namespace BankingBusinessLayer //Business Layer Function Logic
         public void RegisterUser(User user)
         {
             user.GoodStanding = true;
-            // Add Checks Here
             Console.WriteLine($"Enter First Name for User {user.UserId}: ");
             string userFirstName = Console.ReadLine();
-            Console.WriteLine($"Enter Last Name for User {user.UserId}: ");
-            string userLastName = Console.ReadLine();
-            Console.WriteLine($"Enter SSN for User {user.UserId}: ");
-            string userSSN = Console.ReadLine();
-            int castedUserSSN = int.Parse(userSSN);
-            user.FName = userFirstName;
-            user.LName = userLastName;
-            user.SSN = castedUserSSN;
-            Console.WriteLine($"You have now registered!!");
-            UserDAL userData = new UserDAL();
-            userData.RegisterUserDAL(user);
-            BankingMenu(user);
+            bool containsInt = userFirstName.Any(c => char.IsDigit(c));
+            if (containsInt)
+            {
+                Console.WriteLine("FirstName is invalid");
+                RegisterUser(user);
+            }
+            else
+            {
+                Console.WriteLine($"Enter Last Name for User {user.UserId}: ");
+                string userLastName = Console.ReadLine();
+                Console.WriteLine($"Enter SSN for User {user.UserId}: ");
+                containsInt = userLastName.Any(c => char.IsDigit(c));
+                if (containsInt)
+                {
+                    Console.WriteLine("LastName is invalid");
+                    RegisterUser(user);
+                }
+                else
+                {
+                    string userSSN = Console.ReadLine();
+                    bool isIntString = userSSN.All(c => char.IsDigit(c));
+                    if (isIntString)
+                    {
+                        int castedUserSSN = int.Parse(userSSN);
+                        user.FName = userFirstName;
+                        user.LName = userLastName;
+                        user.SSN = castedUserSSN;
+                        Console.WriteLine($"You have now registered!!");
+                        UserDAL userData = new UserDAL();
+                        userData.RegisterUserDAL(user);
+                        BankingMenu(user);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Given SSN is not a number");
+                        RegisterUser(user);
+                    }
+                }
+
+            }
         }
         public (bool, double) ValidBalance()
         {
             bool isValid = false;
             Console.WriteLine("How much do you want to start the account with?");
+            Console.WriteLine("For Loan accounts, this is your starting loan");
             //Add Check
             string desiredBalance = Console.ReadLine();
             double convertedBalance = double.Parse(desiredBalance);
@@ -280,6 +324,20 @@ namespace BankingBusinessLayer //Business Layer Function Logic
                 foreach(Principal principal in acc.UnappliedPrincipal)
                 {
                     //checks datetime
+                    DateTime startDate = principal.DateDeposited;
+                    DateTime endDate = principal.DateOfMaturity;
+                    double startDeposit = principal.AmountInvolved;
+                    int interestTerm = principal.InterestTerm;
+                    double interestRate = principal.InterestRate;
+                    DateTime dateOfApplication = DateTime.Today.AddDays(interestTerm);
+                    while (dateOfApplication > startDate)
+                    {
+                        startDate = dateOfApplication;
+                        startDeposit = (startDeposit * interestRate);
+                        dateOfApplication = dateOfApplication.AddDays(interestTerm);
+                        
+                    }
+                    //if dateOfApplication
                     // if interest is to be applied adjusts start date
                     // and date of matriculation
                     // If date of matriculation has passed remove object
@@ -598,6 +656,83 @@ namespace BankingBusinessLayer //Business Layer Function Logic
                         else
                         {
                             Console.WriteLine("There are no accounts to deposit to!");
+                        }
+                        break;
+                    case "M":
+                        Console.WriteLine("Making a Loan Payment");
+                        if (AtLeastOneAccount)
+                        {
+                            bool HasALoanAccount = false;
+                            foreach (IAccount account in user.Accounts)
+                            {
+                                if(account is LoanAccount)
+                                {
+                                    HasALoanAccount = true;
+                                }
+                            }
+                            if (HasALoanAccount)
+                            {
+                                // Do withdraw on loan account
+                                Console.WriteLine($"User {user.UserId}: {user.FName} {user.LName}");
+                                foreach (IAccount acc in user.Accounts)
+                                {
+                                    if (acc is LoanAccount)
+                                    {
+                                        Console.WriteLine($"Account {acc.AccountId} Current Balance: {acc.CurrentBalance}");
+
+                                    }
+                                }
+                                Console.WriteLine("Select which Loan Accouunt you want to make a payment to to:");
+
+                                string givenId = Console.ReadLine();
+                                // Give check for parse operation
+                                int convertedId = int.Parse(givenId);
+                                // search for account by ID
+                                int IdMatch = user.Accounts.FindIndex(n => n.AccountId == convertedId);
+
+                                if (IdMatch < 0)
+                                {
+                                    Console.WriteLine("Account ID is invalid");
+                                }
+                                else
+                                {
+                                    if (user.Accounts[IdMatch] is LoanAccount)
+                                    {
+                                        Console.WriteLine("Enter Amount you want to deposit:");
+                                        string Value = Console.ReadLine();
+                                        // Give check for parse operation
+                                        double convertedValue = int.Parse(Value);
+                                        // Check if negative run check
+                                        Principal principal = new Principal
+                                        {
+                                            AmountInvolved = convertedValue
+                                        };
+                                        bool deposited = Deposit(user, user.Accounts[IdMatch],principal);
+                                        if (deposited)
+                                        {
+                                            Console.WriteLine("Deposit completed");
+                                            // Run term deposit check
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine("Deposit not completed");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Invalid Account entered");
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+                                Console.WriteLine("You have no loan accounts available");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("No accounts to make a payment to");
                         }
                         break;
                     case "L":
