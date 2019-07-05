@@ -22,14 +22,12 @@ namespace Banking //Front End
             Console.WriteLine("and transfer funds.");
             // Declare User object
             UserBL userBanking = new UserBL();
-            userBanking.RegisterMenu();
+            userBanking.StartUpMenu();
             //Console.WriteLine(user.UserId);
 
             // Registration option
 
-            //Main Menu
-
-            //Add Account
+            // Main Menu
         }
     }
 }
